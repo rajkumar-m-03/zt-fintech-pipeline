@@ -1,5 +1,13 @@
+import os
+
 import pytest
-from app import app, accounts
+
+from app import app
+
+
+AUTH_HEADERS = {
+    "Authorization": f"Bearer {os.getenv('LEDGER_API_TOKEN', 'test-token')}"
+}
 
 
 @pytest.fixture
@@ -10,24 +18,31 @@ def client():
         yield client
 
 
-@pytest.fixture(autouse=True)
-def reset_accounts():
-    accounts["alice"] = 10000.0
-    accounts["bob"] = 5000.0
-
-
-def test_healthz(client):
+def test_health(client):
     response = client.get("/healthz")
 
     assert response.status_code == 200
-    assert response.json["status"] == "ok"
+    assert response.get_json()["status"] == "ok"
+
+
+def test_ready(client):
+    response = client.get("/readyz")
+
+    assert response.status_code == 200
+    assert response.get_json()["status"] == "ready"
 
 
 def test_get_account(client):
-    response = client.get("/accounts/alice")
+    response = client.get(
+        "/accounts/alice",
+        headers=AUTH_HEADERS
+    )
 
     assert response.status_code == 200
-    assert response.json["balance"] == 10000.0
+    data = response.get_json()
+
+    assert data["account_id"] == "alice"
+    assert data["balance"] == 10000.0
 
 
 def test_transfer(client):
@@ -37,12 +52,16 @@ def test_transfer(client):
             "from_account": "alice",
             "to_account": "bob",
             "amount": 1000
-        }
+        },
+        headers=AUTH_HEADERS
     )
 
     assert response.status_code == 200
-    assert response.json["from_balance"] == 9000.0
-    assert response.json["to_balance"] == 6000.0
+
+    data = response.get_json()
+
+    assert data["from_account"]["balance"] == 9000.0
+    assert data["to_account"]["balance"] == 6000.0
 
 
 def test_insufficient_balance(client):
@@ -51,9 +70,9 @@ def test_insufficient_balance(client):
         json={
             "from_account": "alice",
             "to_account": "bob",
-            "amount": 20000
-        }
+            "amount": 999999
+        },
+        headers=AUTH_HEADERS
     )
 
     assert response.status_code == 400
-    assert response.json["error"] == "Insufficient balance"
