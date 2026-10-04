@@ -1,0 +1,94 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fintech-default-deny
+  namespace: fintech
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: transaction-api-allow
+  namespace: fintech
+spec:
+  podSelector:
+    matchLabels:
+      app: transaction-api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: securepay-frontend
+      ports:
+        - protocol: TCP
+          port: 5001
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: ledger-service
+      ports:
+        - protocol: TCP
+          port: 5002
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ledger-allow
+  namespace: fintech
+spec:
+  podSelector:
+    matchLabels:
+      app: ledger-service
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: transaction-api
+      ports:
+        - protocol: TCP
+          port: 5002
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-allow
+  namespace: fintech
+spec:
+  podSelector:
+    matchLabels:
+      app: securepay-frontend
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53

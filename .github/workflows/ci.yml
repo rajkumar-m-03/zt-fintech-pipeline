@@ -1,0 +1,64 @@
+name: SecurePay DevSecOps Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  security-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test Ledger Service
+        working-directory: services/ledger-service
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+          pytest
+
+      - name: Test Transaction API
+        working-directory: services/transaction-api
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+          pytest
+
+      - name: Build Transaction API Image
+        run: |
+          docker build \
+            -t transaction-api:${{ github.sha }} \
+            services/transaction-api
+
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: transaction-api:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+
+      - name: Install Kyverno CLI
+        run: |
+          curl -L https://github.com/kyverno/kyverno/releases/latest/download/kyverno-cli_linux_x86_64.tar.gz \
+            -o kyverno.tar.gz
+          tar -xzf kyverno.tar.gz
+          sudo mv kyverno /usr/local/bin/kyverno
+
+      - name: Validate Kubernetes Manifests
+        run: |
+          kyverno apply k8s/policies/require-no-privilege-escalation.yaml \
+            --resource k8s/base/transaction-api.yaml

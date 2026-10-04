@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: securepay-frontend
+  namespace: fintech
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: securepay-frontend
+  template:
+    metadata:
+      labels:
+        app: securepay-frontend
+    spec:
+      containers:
+        - name: securepay-frontend
+          image: securepay-frontend:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: securepay-frontend
+  namespace: fintech
+spec:
+  selector:
+    app: securepay-frontend
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+  type: NodePort

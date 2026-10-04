@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fintech-app
+  namespace: fintech
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: fintech-app-role
+  namespace: fintech
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: fintech-app-binding
+  namespace: fintech
+subjects:
+  - kind: ServiceAccount
+    name: fintech-app
+    namespace: fintech
+roleRef:
+  kind: Role
+  name: fintech-app-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledger-service
+  namespace: fintech
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ledger-service
+  template:
+    metadata:
+      labels:
+        app: ledger-service
+    spec:
+      containers:
+        - name: ledger-service
+          image: ledger-service:local
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 5002
+
+          env:
+            - name: LEDGER_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ledger-api-secret
+                  key: api-token
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 5002
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5002
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledger-service
+  namespace: fintech
+spec:
+  selector:
+    app: ledger-service
+  ports:
+    - port: 5002
+      targetPort: 5002
+  type: ClusterIP
