@@ -53,13 +53,9 @@ jobs:
           ignore-unfixed: true
 
       - name: Install Kyverno CLI
-        run: |
-          curl -L https://github.com/kyverno/kyverno/releases/download/v1.19.1/kyverno-cli-1.19.1.tar.gz \
-            -o kyverno.tar.gz
-          tar -tzf kyverno.tar.gz
+        uses: kyverno/action-install-cli@v0.2.0
 
       - name: Validate Kubernetes Manifests
         run: |
-          "$HOME/.local/bin/kyverno" apply \
-            k8s/policies/require-no-privilege-escalation.yaml \
-              --resource k8s/base/transaction-api.yaml
+          kyverno apply k8s/policies/require-no-privilege-escalation.yaml \
+            --resource k8s/base/transaction-api.yaml
