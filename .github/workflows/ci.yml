@@ -57,7 +57,7 @@ jobs:
           curl -L https://github.com/kyverno/kyverno/releases/download/v1.19.1/kyverno-cli-1.19.1.tar.gz \
             -o kyverno.tar.gz
           tar -xzf kyverno.tar.gz
-          sudo mv kyverno /usr/local/bin/kyverno
+          ssudo mv kubectl-kyverno /usr/local/bin/kyverno
           kyverno version
 
       - name: Validate Kubernetes Manifests
