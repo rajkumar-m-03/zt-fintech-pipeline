@@ -56,11 +56,7 @@ jobs:
         run: |
           curl -L https://github.com/kyverno/kyverno/releases/download/v1.19.1/kyverno-cli-1.19.1.tar.gz \
             -o kyverno.tar.gz
-          tar -xzf kyverno.tar.gz
-          mkdir -p "$HOME/.local/bin"
-          mv kubectl-kyverno "$HOME/.local/bin/kyverno"
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          kyverno version
+          tar -tzf kyverno.tar.gz
 
       - name: Validate Kubernetes Manifests
         run: |
