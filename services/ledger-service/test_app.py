@@ -60,8 +60,8 @@ def test_transfer(client):
 
     data = response.get_json()
 
-    assert data["from_account"]["balance"] == 9000.0
-    assert data["to_account"]["balance"] == 6000.0
+    assert data["from_balance"] == 9000.0
+    assert data["to_balance"] == 6000.0
 
 
 def test_insufficient_balance(client):
