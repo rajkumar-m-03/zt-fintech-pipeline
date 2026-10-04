@@ -60,5 +60,6 @@ jobs:
 
       - name: Validate Kubernetes Manifests
         run: |
-          kyverno apply k8s/policies/require-no-privilege-escalation.yaml \
-            --resource k8s/base/transaction-api.yaml
+          "$HOME/.local/bin/kyverno" apply \
+            k8s/policies/require-no-privilege-escalation.yaml \
+              --resource k8s/base/transaction-api.yaml
